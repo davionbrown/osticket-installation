@@ -1,6 +1,6 @@
 # osTicket — Installation on Azure (Windows 11, IIS, PHP & MySQL)
 
-Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azure using **Internet Information Services (IIS)**, **PHP 7.3.8**, **MySQL Server 5.5.62**, and **HeidiSQL 12.3**. This walkthrough records the installation from Azure provisioning through administrator login, with screenshots of each major step.
+Deployed **osTicket v1.15.8** on a **Windows 11 Azure VM** with **IIS**, **PHP 7.3.8**, **MySQL Server 5.5.62**, and **HeidiSQL 12.3**. The steps below document VM provisioning, dependency installation, database setup, and final verification.
 
 ## Azure resource group and virtual machine
 
@@ -16,7 +16,7 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ![Azure VM instance details](images/03a-azure-vm-instance-details.png)
 
-**4. Configure administrator and RDP access.** Create a local administrator account and a unique password. Under inbound ports, select **RDP (3389)** for the temporary lab connection.
+**4. Configure administrator and RDP access.** Create a local administrator account and a unique password. Under inbound ports, select **RDP (3389)** for the temporary lab connection. 
 
 ![Azure VM administrator and RDP settings](images/03b-azure-vm-admin-rdp-settings.png)
 
@@ -50,7 +50,7 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ![Remote Desktop connection](images/07-rdp-connection.png)
 
-**12. Authenticate.** Enter the local administrator username and password created during VM deployment. Do not include credentials in screenshots or the repository.
+**12. Authenticate.** Enter the local administrator username and password created during VM deployment. 
 
 ![Remote Desktop administrator authentication](images/08-rdp-local-admin-authentication.png)
 
@@ -60,7 +60,7 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ## Prepare the installation files and IIS
 
-**14. Download the installation archive.** On the VM, download the installation bundle used for this lab, `osTicket-Installation-Files.zip`.
+**14. Obtain the installation files.** On the VM, download `osTicket-Installation-Files.zip`, the preassembled archive used in this lab. **The archive is not hosted in this repository**, so readers need their own copies of the matching installers: osTicket **1.15.8**, PHP **7.3.8 NTS x86**, PHP Manager for IIS **1.5.0**, IIS URL Rewrite **2**, Microsoft Visual C++ **x86** Redistributable, MySQL Server **5.5.62**, and HeidiSQL **12.3**.
 
 ![Download osTicket installation files](images/10-osticket-install-files-download.png)
 
@@ -126,7 +126,7 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ![Select PHP CGI executable](images/25-php-cgi-exe-selection.png)
 
-**30. Verify registration.** Confirm that PHP Manager displays **PHP 7.3.8** and the `C:\PHP\php-cgi.exe` executable. Restart IIS to apply the changes.
+**30. Verify registration.** Confirm PHP Manager displays **PHP 7.3.8** and `C:\PHP\php-cgi.exe`. To restart IIS, open **Command Prompt as administrator**, run `iisreset`, and wait for confirmation that the services restarted.
 
 ![PHP registration complete](images/26-php-7.3.8-registration-complete.png)
 
@@ -136,7 +136,7 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ![osTicket extracted upload folder](images/27-osticket-extracted-upload-folder.png)
 
-**32. Move the application files.** Move—not copy—the `upload` directory into the IIS website root: `C:\inetpub\wwwroot`.
+**32. Move the application files.** Move the extracted `upload` folder into the IIS website root, `C:\inetpub\wwwroot` (for example, cut the folder and paste it into `wwwroot`).
 
 ![Move upload folder into wwwroot](images/28-upload-folder-copied-wwwroot.png)
 
@@ -170,15 +170,15 @@ Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azur
 
 ![Locate osTicket sample configuration file](images/35-osticket-sample-config-file.png)
 
-**40. Rename the file.** Rename `ost-sampleconfig.php` to `ost-config.php`, preserving the `.php` extension.
+**40. Rename the file.** Rename `ost-sampleconfig.php` to `ost-config.php`.
 
 ![Rename osTicket configuration file](images/36-osticket-config-file-rename.png)
 
-**41. Disable inherited permissions for the installation.** Right-click `ost-config.php` and select **Properties → Security → Advanced**. Select **Disable inheritance**, then choose **Remove all inherited permissions from this object**. Confirm that the permissions list is empty and the button changes to **Enable inheritance**. The file owner can still adjust permissions.
+**41. Disable inherited permissions for installation.** Right-click `ost-config.php` → **Properties → Security → Advanced**. Select **Disable inheritance → Remove all inherited permissions from this object**. Confirm the permissions list is empty and the button now says **Enable inheritance**.
 
 ![Disable inherited permissions on ost-config.php](images/37-osticket-config-inheritance-disabled.png)
 
-**42. Grant temporary installer access.** In **Advanced Security Settings**, select **Add → Select a principal**. Enter `Everyone`, choose **Check Names → OK**, set **Type: Allow** and **Basic permissions: Full control**, then select **OK → Apply**. This temporary, broad permission was used only to allow the installer to write `ost-config.php` in the isolated lab. It must not remain writable after installation.
+**42. Grant temporary installer access.** In **Advanced Security Settings**, select **Add → Select a principal**. Enter `Everyone` → **Check Names → OK**; select **Allow → Full control**, then **OK → Apply**. This broad permission was used **temporarily in this isolated lab** so the installer could write `ost-config.php`; it must be restricted after installation.
 
 ![Temporary osTicket configuration file permissions](images/38-osticket-config-temp-perm.png)
 
@@ -226,15 +226,14 @@ The `root` account was used to reproduce this lab. A production installation sho
 
 ![osTicket setup folder removed](images/46-osticket-setup-folder-removed.png)
 
-**51. Remove temporary write access from the configuration file.** Return to `C:\inetpub\wwwroot\osTicket\include\ost-config.php`, right-click the file, and open **Properties → Security → Advanced**. In the recorded lab, the `Everyone` entry was edited from **Full control** to **Read & execute**, removing write and modification permissions. Select **Apply → OK** to save the change.
+**51. Remove temporary write access.** Open `C:\inetpub\wwwroot\osTicket\include\ost-config.php` → **Properties → Security → Advanced**. Select the `Everyone` entry → **Edit**; clear **Full control**, **Modify**, and **Write**, leaving **Read & execute** and **Read** selected. Apply the change and confirm that `Everyone` now shows **Read & execute**.
 
 ![osTicket configuration file read and execute permissions](images/47-osticket-config-read-only-permissions.png)
 
-**52. Verify administrator access.** In the VM browser, open `http://localhost/osTicket/scp/` and sign in using the administrator account created during installation. Confirm that the **Staff Control Panel** opens and the initial **“osTicket Installed!”** ticket appears.
+**52. Verify administrator access.** In the VM browser, open `http://localhost/osTicket/scp/` and sign in with the administrator account created during setup. Confirm the **Staff Control Panel** loads and displays the initial **“osTicket Installed!”** ticket after removing `setup` and restricting configuration-file write access.
 
 ![osTicket administrator dashboard and initial ticket](images/48-osticket-final-verification.png)
 
 ---
 
-**Result:** osTicket v1.15.8 installed successfully on the Azure Windows 11 VM. IIS served the application, the MySQL database connection succeeded, the installer directory was removed, temporary configuration-file write access was revoked, and the administrator Staff Control Panel loaded with the initial installation ticket.
-
+**Result:** osTicket v1.15.8 installed successfully on Azure. IIS served the application, MySQL connected, the `setup` directory was deleted, temporary configuration-file write access was removed, and the Staff Control Panel loaded successfully.
