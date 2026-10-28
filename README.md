@@ -1,233 +1,240 @@
 # osTicket — Installation on Azure (Windows 11, IIS, PHP & MySQL)
 
-Deployed **osTicket v1.15.8** on a Windows 11 Azure virtual machine using IIS, PHP 7.3.8, MySQL 5.5.62, and HeidiSQL. This walkthrough documents the installation, database connection, configuration, and successful verification.
-
-> **Lab environment:** The recorded software versions are legacy versions used to reproduce this isolated installation. Do not deploy this configuration as a public production help desk. Keep RDP restricted and deallocate/delete the Azure VM when finished.
+Installed **osTicket v1.15.8** on a Windows 11 virtual machine in Microsoft Azure using **Internet Information Services (IIS)**, **PHP 7.3.8**, **MySQL Server 5.5.62**, and **HeidiSQL 12.3**. This walkthrough records the installation from Azure provisioning through administrator login, with screenshots of each major step.
 
 ## Azure resource group and virtual machine
 
-In Azure Portal, create a resource group named `osticket-rg`. Select your subscription and region.
+**1. Create a resource group.** In the Azure portal, open **Resource groups → Create**. Select the subscription and **East US 2** region, enter `osticket-rg`, then select **Review + create → Create**.
 
-![01 resource group creation](images/01-resource-group-creation.png)
+![Create Azure resource group](images/01-resource-group-creation.png)
 
-Open the resource group and confirm that it exists.
+**2. Verify the resource group.** Open `osticket-rg` and confirm that it appears in the Azure portal.
 
-![02 resource group overview](images/02-resource-group-overview.png)
+![Azure resource group overview](images/02-resource-group-overview.png)
 
-Create a Windows 11 Pro virtual machine named `osticket-vm` in East US 2. Select the 4-vCPU, 8-GB size shown and configure the availability and security options.
+**3. Configure the virtual machine.** Open **Virtual machines → Create → Azure virtual machine**. Choose resource group `osticket-rg`, enter `osticket-vm`, select **Windows 11 Pro** as the image, and use the demonstrated **4-vCPU, 8-GiB** VM size. Set the availability and security options shown in the deployment.
 
-![03a azure vm instance details](images/03a-azure-vm-instance-details.png)
+![Azure VM instance details](images/03a-azure-vm-instance-details.png)
 
-Create the local administrator account and select Remote Desktop (RDP) access for the lab.
+**4. Configure administrator and RDP access.** Create a local administrator account and a unique password. Under inbound ports, select **RDP (3389)** for the temporary lab connection.
 
-![03b azure vm admin rdp settings](images/03b-azure-vm-admin-rdp-settings.png)
+![Azure VM administrator and RDP settings](images/03b-azure-vm-admin-rdp-settings.png)
 
-Open **Review + create** and inspect the instance settings and estimated price.
+**5. Review the VM configuration.** Select **Review + create**. Confirm the VM name, Windows image, region, instance size, and estimated cost.
 
-![04a azure vm deployment summary](images/04a-azure-vm-deployment-summary.png)
+![Azure VM deployment summary](images/04a-azure-vm-deployment-summary.png)
 
-Review disk and network settings, including the virtual network, subnet, and public IP.
+**6. Review storage and networking.** Verify the OS disk, virtual network, subnet, network security settings, and public IP configuration.
 
-![04b azure vm storage network review](images/04b-azure-vm-storage-network-review.png)
+![Azure VM storage and network review](images/04b-azure-vm-storage-network-review.png)
 
-Review the management and monitoring settings before deployment.
+**7. Review management options.** Confirm the selected management and monitoring settings before deploying the VM.
 
-![04c azure vm management review](images/04c-azure-vm-management-review.png)
+![Azure VM management review](images/04c-azure-vm-management-review.png)
 
-Select **Create** and verify that Azure reports successful deployment.
+**8. Deploy the VM.** Select **Create**, wait for deployment to finish, and verify that Azure reports **Your deployment is complete**.
 
-![05 azure vm deployment success](images/05-azure-vm-deployment-success.png)
+![Azure VM deployment successful](images/05-azure-vm-deployment-success.png)
 
-Open the deployed VM overview and verify the running status and network configuration.
+**9. Check the VM overview.** Open `osticket-vm` and verify the VM is running. Locate its public IP address for the RDP connection.
 
-![06a azure vm overview network](images/06a-azure-vm-overview-network.png)
+![Azure VM overview and network](images/06a-azure-vm-overview-network.png)
 
-Check the virtual machine specifications and operating system details.
+**10. Confirm system details.** Review the VM's operating system and hardware specifications.
 
-![06b azure vm system properties](images/06b-azure-vm-system-properties.png)
+![Azure VM system properties](images/06b-azure-vm-system-properties.png)
 
 ## Connect to the Windows VM
 
-On the local Windows computer, open **Remote Desktop Connection** and enter the Azure VM public IP.
+**11. Start Remote Desktop.** On a Windows computer, open **Remote Desktop Connection** (`mstsc`) and enter the VM's public IP address.
 
-![07 rdp connection](images/07-rdp-connection.png)
+![Remote Desktop connection](images/07-rdp-connection.png)
 
-Authenticate using the VM local administrator account created in Azure. Do not save or publish the password.
+**12. Authenticate.** Enter the local administrator username and password created during VM deployment. Do not include credentials in screenshots or the repository.
 
-![08 rdp local admin authentication](images/08-rdp-local-admin-authentication.png)
+![Remote Desktop administrator authentication](images/08-rdp-local-admin-authentication.png)
 
-Confirm that the remote Windows 11 desktop loads.
+**13. Verify the session.** Confirm that the remote Windows 11 desktop loads.
 
-![09 azure vm rdp success](images/09-azure-vm-rdp-success.png)
+![Successful RDP session](images/09-azure-vm-rdp-success.png)
 
 ## Prepare the installation files and IIS
 
-Download the osTicket lab installation archive onto the VM.
+**14. Download the installation archive.** On the VM, download the installation bundle used for this lab, `osTicket-Installation-Files.zip`.
 
-![10 osticket install files download](images/10-osticket-install-files-download.png)
+![Download osTicket installation files](images/10-osticket-install-files-download.png)
 
-Extract the archive and verify that the installers and osTicket ZIP are present.
+**15. Extract the archive.** Right-click the ZIP file, choose **Extract All**, and verify that the folder contains the osTicket ZIP and installers for PHP Manager, IIS URL Rewrite, PHP, Visual C++, MySQL, and HeidiSQL.
 
-![11 osticket install files extracted](images/11-osticket-install-files-extracted.png)
+![Extracted installation files](images/11-osticket-install-files-extracted.png)
 
-Open **Turn Windows features on or off** and enable **Internet Information Services**, including **World Wide Web Services → Application Development Features → CGI**.
+**16. Enable IIS and CGI.** Open **Control Panel → Programs → Turn Windows features on or off**. Enable **Internet Information Services** and navigate to **World Wide Web Services → Application Development Features → CGI**. Apply the changes.
 
-![12 iis cgi feature config](images/12-iis-cgi-feature-config.png)
+![Enable IIS and CGI](images/12-iis-cgi-feature-config.png)
 
-Open `http://127.0.0.1` and verify that the default IIS welcome page loads.
+**17. Test IIS.** In a browser on the VM, open `http://127.0.0.1` and verify that the default IIS welcome page appears.
 
-![13 iis default website verification](images/13-iis-default-website-verification.png)
+![IIS default website verification](images/13-iis-default-website-verification.png)
 
-Install **PHP Manager for IIS** using the included installer.
+**18. Install PHP Manager.** Run the included **PHP Manager for IIS** installer and complete the setup wizard.
 
-![14 php manager install complete](images/14-php-manager-install-complete.png)
+![PHP Manager installation complete](images/14-php-manager-install-complete.png)
 
-Install **IIS URL Rewrite Module 2**.
+**19. Install IIS URL Rewrite.** Run the included **IIS URL Rewrite Module 2** installer and finish setup.
 
-![15 iis url rewrite install complete](images/15-iis-url-rewrite-install-complete.png)
+![IIS URL Rewrite installation complete](images/15-iis-url-rewrite-install-complete.png)
 
-Create the `C:\PHP` folder on the VM.
+**20. Create the PHP directory.** In File Explorer, navigate to `C:\` and create a folder named `PHP`.
 
-![16 php install directory](images/16-php-install-directory.png)
+![Create PHP installation directory](images/16-php-install-directory.png)
 
-Extract the provided PHP 7.3.8 files into `C:\PHP`.
+**21. Extract PHP.** Extract the **PHP 7.3.8 non-thread-safe x86** archive into `C:\PHP`. Verify that the PHP files, including `php-cgi.exe`, are directly inside that directory.
 
-![17 php 7.3.8 files extracted](images/17-php-7.3.8-files-extracted.png)
+![PHP 7.3.8 files extracted](images/17-php-7.3.8-files-extracted.png)
 
-Install the Microsoft Visual C++ x86 Redistributable included with the lab.
+**22. Install the Visual C++ runtime.** Run the included **Microsoft Visual C++ x86 Redistributable** installer and complete installation.
 
-![18 vc redist install complete](images/18-vc-redist-install-complete.png)
+![Visual C++ Redistributable installation complete](images/18-vc-redist-install-complete.png)
 
 ## Install MySQL and register PHP
 
-Launch the MySQL Server 5.5 setup wizard.
+**23. Launch MySQL setup.** Open the **MySQL Server 5.5.62** installer from the extracted installation files.
 
-![19 mysql server setup wizard](images/19-mysql-server-setup-wizard.png)
+![MySQL setup wizard](images/19-mysql-server-setup-wizard.png)
 
-Choose **Typical** installation and complete the installer.
+**24. Select the installation type.** Choose **Typical**, continue through the installer, and finish installing MySQL Server.
 
-![20 mysql typical setup](images/20-mysql-typical-setup.png)
+![MySQL Typical installation](images/20-mysql-typical-setup.png)
 
-In the MySQL configuration wizard, choose **Standard Configuration**.
+**25. Configure the MySQL instance.** In the MySQL Server Instance Configuration Wizard, select **Standard Configuration**.
 
-![21 mysql standard config](images/21-mysql-standard-config.png)
+![MySQL Standard Configuration](images/21-mysql-standard-config.png)
 
-Set a strong MySQL `root` password. Leave remote root access and anonymous accounts disabled.
+**26. Set database security options.** Enter and confirm a unique MySQL `root` password. Leave **remote root access** and **anonymous accounts** disabled.
 
-![22 mysql root account config](images/22-mysql-root-account-config.png)
+![MySQL root account configuration](images/22-mysql-root-account-config.png)
 
-Execute the configuration and verify that the MySQL service starts successfully.
+**27. Start MySQL.** Execute the configuration. Confirm the wizard successfully prepares the configuration, writes the configuration file, starts the service, and applies the security settings.
 
-![23 mysql server config complete](images/23-mysql-server-config-complete.png)
+![MySQL server configuration completed](images/23-mysql-server-config-complete.png)
 
-Open **IIS Manager → PHP Manager**. It initially reports that PHP is not registered.
+**28. Inspect PHP Manager.** Open **Internet Information Services (IIS) Manager**, select the server, and open **PHP Manager**. Before registration, PHP is reported as unavailable.
 
-![24 php manager before registration](images/24-php-manager-before-registration.png)
+![PHP Manager before registration](images/24-php-manager-before-registration.png)
 
-Select **Register new PHP version** and point it to `C:\PHP\php-cgi.exe`.
+**29. Register PHP.** Select **Register new PHP version** and enter the executable path `C:\PHP\php-cgi.exe`. Confirm the selection.
 
-![25 php cgi exe selection](images/25-php-cgi-exe-selection.png)
+![Select PHP CGI executable](images/25-php-cgi-exe-selection.png)
 
-Confirm that IIS PHP Manager recognizes PHP 7.3.8.
+**30. Verify registration.** Confirm that PHP Manager displays **PHP 7.3.8** and the `C:\PHP\php-cgi.exe` executable. Restart IIS to apply the changes.
 
-![26 php 7.3.8 registration complete](images/26-php-7.3.8-registration-complete.png)
+![PHP registration complete](images/26-php-7.3.8-registration-complete.png)
 
 ## Deploy osTicket to IIS
 
-Extract `osTicket-v1.15.8.zip` and locate the `upload` folder.
+**31. Extract osTicket.** Extract `osTicket-v1.15.8.zip` and locate the `upload` directory inside the extracted folder.
 
-![27 osticket extracted upload folder](images/27-osticket-extracted-upload-folder.png)
+![osTicket extracted upload folder](images/27-osticket-extracted-upload-folder.png)
 
-Move the `upload` folder into `C:\inetpub\wwwroot`.
+**32. Move the application files.** Move—not copy—the `upload` directory into the IIS website root: `C:\inetpub\wwwroot`.
 
-![28 upload folder copied wwwroot](images/28-upload-folder-copied-wwwroot.png)
+![Move upload folder into wwwroot](images/28-upload-folder-copied-wwwroot.png)
 
-Rename that folder to `osTicket` (without spaces). The resulting path is `C:\inetpub\wwwroot\osTicket`.
+**33. Rename the folder.** Rename `upload` to `osTicket`. The final application path is `C:\inetpub\wwwroot\osTicket`.
 
-![29 upload folder renamed osticket](images/29-upload-folder-renamed-osticket.png)
+![Rename upload folder to osTicket](images/29-upload-folder-renamed-osticket.png)
 
-In IIS Manager, expand **Default Web Site** and select the new `osTicket` directory.
+**34. Locate osTicket in IIS.** In IIS Manager, expand **Sites → Default Web Site** and select the `osTicket` directory. Use **Browse *:80 (http)** to open the site.
 
-![30 osticket directory iis](images/30-osticket-directory-iis.png)
+![osTicket directory in IIS Manager](images/30-osticket-directory-iis.png)
 
-Open `http://localhost/osTicket/setup/` and inspect the installer prerequisites.
+**35. Inspect the installer prerequisites.** Open `http://localhost/osTicket/setup/`. Review the required and recommended PHP extension checks before continuing.
 
-![31 iis manager and osticket install](images/31-iis-manager-and-osticket-install.png)
+![osTicket installer prerequisites](images/31-iis-manager-and-osticket-install.png)
 
-In **PHP Manager → PHP Extensions**, identify the initially disabled extensions.
+**36. Inspect PHP extensions.** In IIS Manager, open **PHP Manager → Enable or disable an extension** and locate the disabled extensions needed by the installer.
 
-![32 php extensions before enabling](images/32-php-extensions-before-enabling.png)
+![PHP extensions before enabling](images/32-php-extensions-before-enabling.png)
 
-Enable `php_imap.dll`, `php_intl.dll`, and `php_opcache.dll` in PHP Manager.
+**37. Enable the extensions.** Enable `php_imap.dll`, `php_intl.dll`, and `php_opcache.dll` in PHP Manager.
 
-![33 php ext enabled](images/33-php-ext-enabled.png)
+![PHP extensions enabled](images/33-php-ext-enabled.png)
 
-Refresh the installer. Confirm the required checks pass; IMAP and Intl are recognized. Zend OPcache and APCu may remain marked as unavailable because they are optional for this lab.
+**38. Recheck prerequisites.** Refresh the osTicket installer. Verify that the required checks pass and that the IMAP and Intl checks are green. In this lab, the installer still marked **Zend OPcache** and **APCu** as unavailable; these were recommended rather than required for completing the installation.
 
-![34 osticket reqs verified](images/34-osticket-reqs-verified.png)
+![osTicket requirements verified](images/34-osticket-reqs-verified.png)
 
 ## Prepare the configuration file
 
-In `C:\inetpub\wwwroot\osTicket\include`, locate `ost-sampleconfig.php`.
+**39. Find the sample configuration file.** Open File Explorer and navigate to `C:\inetpub\wwwroot\osTicket\include`. Locate `ost-sampleconfig.php`.
 
-![35 osticket sample config file](images/35-osticket-sample-config-file.png)
+![Locate osTicket sample configuration file](images/35-osticket-sample-config-file.png)
 
-Rename the file to `ost-config.php`.
+**40. Rename the file.** Rename `ost-sampleconfig.php` to `ost-config.php`, preserving the `.php` extension.
 
-![36 osticket config file rename](images/36-osticket-config-file-rename.png)
+![Rename osTicket configuration file](images/36-osticket-config-file-rename.png)
 
-Open the file’s **Properties → Security → Advanced** and disable inheritance as shown.
+**41. Disable inherited permissions for the installation.** Right-click `ost-config.php` and select **Properties → Security → Advanced**. Select **Disable inheritance**, then choose **Remove all inherited permissions from this object**. Confirm that the permissions list is empty and the button changes to **Enable inheritance**. The file owner can still adjust permissions.
 
-![37 osticket config inheritance disabled](images/37-osticket-config-inheritance-disabled.png)
+![Disable inherited permissions on ost-config.php](images/37-osticket-config-inheritance-disabled.png)
 
-For the isolated lab installation, temporarily grant `Everyone` **Full Control** so the installer can write the file. Remove broad write access immediately after installation.
+**42. Grant temporary installer access.** In **Advanced Security Settings**, select **Add → Select a principal**. Enter `Everyone`, choose **Check Names → OK**, set **Type: Allow** and **Basic permissions: Full control**, then select **OK → Apply**. This temporary, broad permission was used only to allow the installer to write `ost-config.php` in the isolated lab. It must not remain writable after installation.
 
-![38 osticket config temp perm](images/38-osticket-config-temp-perm.png)
+![Temporary osTicket configuration file permissions](images/38-osticket-config-temp-perm.png)
 
 ## Configure and install the application
 
-Select **Continue** in the osTicket installer. Enter the help desk name, administrator information, and a unique administrator password.
+**43. Open the installation form.** Return to `http://localhost/osTicket/setup/` and select **Continue**. Enter the help desk name and email address, administrator name, email address, username, and a unique administrator password. Leave the database settings for the next steps.
 
-![39 osticket install form](images/39-osticket-install-form.png)
+![osTicket basic installation form](images/39-osticket-install-form.png)
 
-Install HeidiSQL from the supplied installation files.
+**44. Install HeidiSQL.** Run the included **HeidiSQL 12.3** installer, complete the wizard, and launch the application.
 
-![40 heidisql install complete](images/40-heidisql-install-complete.png)
+![HeidiSQL installation complete](images/40-heidisql-install-complete.png)
 
-Open HeidiSQL and connect over **MariaDB or MySQL (TCP/IP)** to `127.0.0.1`, port `3306`, with MySQL `root` credentials.
+**45. Connect to MySQL.** In HeidiSQL Session Manager, select **MariaDB or MySQL (TCP/IP)**. Set **Hostname/IP** to `127.0.0.1`, **User** to `root`, and **Port** to `3306`. Enter the MySQL password created earlier and open the connection.
 
-![41 heidisql mysql connect settings](images/41-heidisql-mysql-connect-settings.png)
+![HeidiSQL MySQL connection settings](images/41-heidisql-mysql-connect-settings.png)
 
-Right-click the server, choose **Create new → Database**, and name it `osTicket` (shown using the server’s default collation).
+**46. Create the database.** Right-click the connected server and select **Create new → Database**. Enter `osTicket` as the database name and retain the demonstrated server-default collation, `latin1_swedish_ci`. Select **OK**. The resulting database appears as `osticket` in this installation.
 
-![42 heidisql create osticket database](images/42-heidisql-create-osticket-database.png)
+![Create osTicket database in HeidiSQL](images/42-heidisql-create-osticket-database.png)
 
-Verify the empty `osticket` database appears in HeidiSQL.
+**47. Verify the empty database.** Select `osticket` in HeidiSQL and confirm it exists before installing the application.
 
-![43 osticket database created](images/43-osticket-database-created.png)
+![Verify newly created osTicket database](images/43-osticket-database-created.png)
 
-Return to the osTicket installer. Use table prefix `ost_`, hostname `localhost`, database `osticket`, MySQL username `root`, and the database password. Keep credentials out of the public screenshots.
+**48. Complete database settings in the installer.** Return to the osTicket installation form and enter the following values:
 
-![44 osticket mysql connection settings](images/44-osticket-mysql-connection-settings.png)
+- **MySQL Table Prefix:** `ost_`
+- **MySQL Hostname:** `localhost`
+- **MySQL Database:** `osticket`
+- **MySQL Username:** `root`
+- **MySQL Password:** the password configured during MySQL setup
 
-Click **Install Now** and confirm the **Congratulations!** installation-success page appears.
+The `root` account was used to reproduce this lab. A production installation should instead use a dedicated database user with only the required privileges.
 
-![45 osticket install success](images/45-osticket-install-success.png)
+![osTicket database connection settings](images/44-osticket-mysql-connection-settings.png)
+
+**49. Install osTicket.** Select **Install Now**. Wait for the **Congratulations!** page confirming that osTicket installation completed successfully.
+
+![osTicket installation successful](images/45-osticket-install-success.png)
 
 ## Post-installation cleanup and verification
 
-Delete `C:\inetpub\wwwroot\osTicket\setup` after installation.
+**50. Remove the installer directory.** In File Explorer, open `C:\inetpub\wwwroot\osTicket`. Delete the `setup` folder and confirm it is no longer present. This prevents the installer from remaining accessible.
 
-![46 osticket setup folder removed](images/46-osticket-setup-folder-removed.png)
+![osTicket setup folder removed](images/46-osticket-setup-folder-removed.png)
 
-Return to the security settings for `include\ost-config.php` and remove temporary write/Full Control access. In this lab the `Everyone` entry was changed to **Read & Execute**; production deployments should limit file access to authorized identities.
+**51. Remove temporary write access from the configuration file.** Return to `C:\inetpub\wwwroot\osTicket\include\ost-config.php`, right-click the file, and open **Properties → Security → Advanced**. In the recorded lab, the `Everyone` entry was edited from **Full control** to **Read & execute**, removing write and modification permissions. Select **Apply → OK** to save the change.
 
-![47 osticket config read only permissions](images/47-osticket-config-read-only-permissions.png)
+![osTicket configuration file read and execute permissions](images/47-osticket-config-read-only-permissions.png)
 
-Open `http://localhost/osTicket/scp/`, log in as the administrator, and verify the Staff Control Panel and initial “osTicket Installed!” ticket load correctly.
+**52. Verify administrator access.** In the VM browser, open `http://localhost/osTicket/scp/` and sign in using the administrator account created during installation. Confirm that the **Staff Control Panel** opens and the initial **“osTicket Installed!”** ticket appears.
 
-![48 osticket final verification](images/48-osticket-final-verification.png)
+![osTicket administrator dashboard and initial ticket](images/48-osticket-final-verification.png)
 
 ---
 
-**Result:** osTicket installed successfully, the administrator Staff Control Panel loaded, and the application remained accessible after removing the installer folder and restricting the configuration file permissions.
+**Result:** osTicket v1.15.8 installed successfully on the Azure Windows 11 VM. IIS served the application, the MySQL database connection succeeded, the installer directory was removed, temporary configuration-file write access was revoked, and the administrator Staff Control Panel loaded with the initial installation ticket.
+
